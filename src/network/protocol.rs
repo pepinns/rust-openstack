@@ -53,7 +53,8 @@ protocol_enum! {
         Active = "ACTIVE",
         Down = "DOWN",
         Building = "BUILD",
-        Error = "ERROR"
+        Error = "ERROR",
+        NotAvailable = "N/A"
     }
 }
 
