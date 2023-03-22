@@ -322,6 +322,26 @@ impl PortExtraDhcpOption {
     }
 }
 
+fn deserialize_ip_or_net_prefix<'a, S>(
+    deserializer: S,
+) -> std::result::Result<ipnet::IpNet, S::Error>
+where
+    S: serde::Deserializer<'a>,
+{
+    let ipstr: String = serde::Deserialize::deserialize(deserializer)?;
+
+    match ipstr.parse() {
+        Ok(ip) => Ok(ip),
+        Err(e1) => match ipstr.parse() {
+            Ok(ip) => Ok(ipnet::IpNet::new(ip, 32).unwrap()),
+            Err(e) => Err(serde::de::Error::custom(format!(
+                "error parsing {} : {} {}",
+                ipstr, &e1, &e
+            ))),
+        },
+    }
+}
+
 /// A port's IP address.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FixedIp {
@@ -334,7 +354,8 @@ pub struct FixedIp {
 /// A port's IP address.
 #[derive(Debug, Clone, Deserialize, Serialize, Copy)]
 pub struct AllowedAddressPair {
-    pub ip_address: net::IpAddr,
+    #[serde(deserialize_with = "deserialize_ip_or_net_prefix")]
+    pub ip_address: ipnet::IpNet,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mac_address: Option<MacAddress>,
 }
